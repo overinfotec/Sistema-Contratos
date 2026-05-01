@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestão de Contratos de TI</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f3; --bg3: #eeede8;
+    --text: #1a1a18; --text2: #5f5e5a; --text3: #888780;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --blue: #185FA5; --blue-bg: #E6F1FB; --blue-text: #0C447C;
+    --green-bg: #EAF3DE; --green-text: #27500A;
+    --amber-bg: #FAEEDA; --amber-text: #633806;
+    --gray-bg: #F1EFE8; --gray-text: #444441;
+    --red-bg: #FCEBEB; --red-text: #791F1F;
+    --radius: 8px; --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2b;
+      --text: #f0ede8; --text2: #b4b2a9; --text3: #888780;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+      --blue: #378ADD; --blue-bg: #0C447C; --blue-text: #B5D4F4;
+      --green-bg: #27500A; --green-text: #C0DD97;
+      --amber-bg: #633806; --amber-text: #FAC775;
+      --gray-bg: #444441; --gray-text: #D3D1C7;
+      --red-bg: #791F1F; --red-text: #F7C1C1;
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); font-size: 14px; line-height: 1.5; }
+
+  /* SIDEBAR */
+  .layout { display: flex; min-height: 100vh; }
+  .sidebar { width: 220px; background: var(--bg); border-right: 0.5px solid var(--border); padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+  .sidebar-logo { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 1.5rem; padding: 0 .5rem; display: flex; align-items: center; gap: 8px; }
+  .sidebar-logo span { width: 28px; height: 28px; background: var(--blue); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; font-weight: 700; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius); cursor: pointer; color: var(--text2); font-size: 13px; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item:hover { background: var(--bg2); color: var(--text); }
+  .nav-item.active { background: var(--blue-bg); color: var(--blue-text); font-weight: 500; }
+  .nav-icon { width: 18px; height: 18px; flex-shrink: 0; opacity: .7; }
+  .nav-item.active .nav-icon { opacity: 1; }
+
+  /* MAIN */
+  .main { flex: 1; padding: 2rem; overflow-x: hidden; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .page-title { font-size: 20px; font-weight: 600; color: var(--text); margin-bottom: 1.5rem; }
+
+  /* KPI CARDS */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+  .kpi { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+  .kpi-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+  .kpi-val { font-size: 24px; font-weight: 600; color: var(--text); }
+  .kpi-val.warn { color: #854F0B; }
+  .kpi-val.danger { color: #A32D2D; }
+  .kpi-val.success { color: #3B6D11; }
+  .kpi-val.sm { font-size: 16px; }
+
+  /* CHARTS */
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 1.5rem; }
+  @media (max-width: 700px) { .charts-row { grid-template-columns: 1fr; } }
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.5rem; }
+  .card-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 1rem; }
+  .chart-wrap { position: relative; width: 100%; }
+
+  /* LEGEND */
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; font-size: 12px; color: var(--text2); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px; }
+
+  /* VENCIMENTOS */
+  .venc-list { display: flex; flex-direction: column; gap: 8px; }
+  .venc-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: var(--radius); background: var(--bg2); gap: 12px; }
+  .venc-name { font-size: 13px; font-weight: 500; }
+  .venc-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  /* BADGE */
+  .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+  .b-ativo { background: var(--green-bg); color: var(--green-text); }
+  .b-venc { background: var(--amber-bg); color: var(--amber-text); }
+  .b-enc { background: var(--gray-bg); color: var(--gray-text); }
+  .b-renov { background: var(--blue-bg); color: var(--blue-text); }
+
+  /* TOOLBAR */
+  .toolbar { display: flex; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+  .toolbar input, .toolbar select { font-size: 13px; padding: 7px 12px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg); color: var(--text); outline: none; }
+  .toolbar input { flex: 1; min-width: 180px; }
+  .toolbar input:focus, .toolbar select:focus { border-color: var(--blue); }
+  .btn { padding: 8px 16px; border-radius: var(--radius); border: none; font-size: 13px; cursor: pointer; font-weight: 500; }
+  .btn-primary { background: var(--blue); color: #fff; }
+  .btn-primary:hover { opacity: .9; }
+  .btn-ghost { background: transparent; border: 0.5px solid var(--border2); color: var(--text); }
+  .btn-ghost:hover { background: var(--bg2); }
+
+  /* TABLE */
+  .table-wrap { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+  th { background: var(--bg2); color: var(--text2); font-weight: 500; padding: 10px 12px; text-align: left; border-bottom: 0.5px solid var(--border); font-size: 12px; }
+  td { padding: 10px 12px; border-bottom: 0.5px solid var(--border); color: var(--text); vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg2); }
+  .col-f{width:15%}.col-o{width:18%}.col-r{width:12%}.col-v{width:11%}.col-d{width:9%}.col-p{width:9%}.col-s{width:13%}.col-a{width:13%}
+
+  /* TABLE ACTIONS */
+  .tactions { display: flex; gap: 6px; }
+  .tbtn { background: transparent; border: 0.5px solid var(--border2); border-radius: 6px; padding: 3px 9px; font-size: 12px; cursor: pointer; color: var(--text); }
+  .tbtn:hover { background: var(--bg2); }
+  .tbtn.del { color: #A32D2D; border-color: rgba(162,45,45,.3); }
+  .tbtn.del:hover { background: var(--red-bg); }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg); border-radius: var(--radius-lg); border: 0.5px solid var(--border); padding: 1.5rem; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+  .modal h2 { font-size: 16px; font-weight: 600; margin-bottom: 1.25rem; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
+  .full { grid-column: 1 / -1; }
+  .field label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 4px; }
+  .field input, .field select, .field textarea { width: 100%; font-size: 13px; padding: 8px 10px; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg); color: var(--text); outline: none; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--blue); }
+  .field textarea { resize: vertical; min-height: 70px; }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1rem; }
+  .empty-msg { text-align: center; padding: 2.5rem; color: var(--text3); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo"><span>C</span> Contratos TI</div>
+    <button class="nav-item active" onclick="showPage('dashboard',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" onclick="showPage('contratos',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Contratos
+    </button>
+    <button class="nav-item" onclick="showPage('vencimentos',this)">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Vencimentos
+    </button>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-title">Dashboard</div>
+
+      <div class="kpi-grid" id="kpi-grid"></div>
+
+      <div class="charts-row">
+        <div class="card" style="margin-bottom:0">
+          <div class="card-title">Contratos por status</div>
+          <div class="legend" id="legend-status"></div>
+          <div class="chart-wrap" style="height:200px"><canvas id="chartStatus" role="img" aria-label="Grafico de distribuicao por status"></canvas></div>
+        </div>
+        <div class="card" style="margin-bottom:0">
+          <div class="card-title">Valor por fornecedor (R$)</div>
+          <div class="chart-wrap" style="height:230px"><canvas id="chartValor" role="img" aria-label="Grafico de valor por fornecedor"></canvas></div>
+        </div>
+      </div>
+      <br>
+      <div class="card">
+        <div class="card-title">Formas de pagamento</div>
+        <div class="chart-wrap" style="height:160px"><canvas id="chartPagto" role="img" aria-label="Formas de pagamento"></canvas></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Proximos vencimentos</div>
+        <div class="venc-list" id="dash-venc"></div>
+      </div>
+    </div>
+
+    <!-- CONTRATOS -->
+    <div class="page" id="page-contratos">
+      <div class="page-title">Contratos</div>
+      <div class="toolbar">
+        <input type="text" id="busca" placeholder="Buscar por fornecedor, objeto ou responsavel..." oninput="renderTabela()">
+        <select id="filtroStatus" onchange="renderTabela()">
+          <option value="">Todos os status</option>
+          <option>Ativo</option>
+          <option>Vencendo em 30 dias</option>
+          <option>Em renovacao</option>
+          <option>Encerrado</option>
+        </select>
+        <button class="btn btn-primary" onclick="abrirModal()">+ Novo contrato</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <colgroup>
+            <col class="col-f"><col class="col-o"><col class="col-r">
+            <col class="col-v"><col class="col-d"><col class="col-d">
+            <col class="col-p"><col class="col-s"><col class="col-a">
+          </colgroup>
+          <thead><tr>
+            <th>Fornecedor</th><th>Objeto</th><th>Responsavel</th>
+            <th>Valor</th><th>Inicio</th><th>Vencimento</th>
+            <th>Pagamento</th><th>Status</th><th>Acoes</th>
+          </tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- VENCIMENTOS -->
+    <div class="page" id="page-vencimentos">
+      <div class="page-title">Vencimentos</div>
+      <div class="card">
+        <div class="card-title">Todos os contratos por data de vencimento</div>
+        <div class="venc-list" id="venc-full"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="fecharModalBg(event)">
+  <div class="modal">
+    <h2 id="modal-title">Novo contrato</h2>
+    <div class="form-grid">
+      <div class="field full"><label>Fornecedor / Empresa</label><input type="text" id="f-fornecedor" placeholder="Ex: Microsoft"></div>
+      <div class="field full"><label>Objeto do contrato</label><input type="text" id="f-objeto" placeholder="Ex: Licencas M365"></div>
+      <div class="field"><label>Responsavel interno</label>
+        <select id="f-resp">
+          <option>Ana Lima</option><option>Carlos Souza</option>
+          <option>Fernanda Reis</option><option>Joao Melo</option><option>Mariana Costa</option>
+        </select>
+      </div>
+      <div class="field"><label>Forma de pagamento</label>
+        <select id="f-pagto"><option>Mensal</option><option>Trimestral</option><option>Semestral</option><option>Anual</option><option>Unico</option></select>
+      </div>
+      <div class="field"><label>Valor (R$)</label><input type="number" id="f-valor" placeholder="0,00"></div>
+      <div class="field"><label>Status</label>
+        <select id="f-status">
+          <option>Ativo</option><option>Vencendo em 30 dias</option><option>Em renovacao</option><option>Encerrado</option>
+        </select>
+      </div>
+      <div class="field"><label>Data de inicio</label><input type="date" id="f-inicio"></div>
+      <div class="field"><label>Data de vencimento</label><input type="date" id="f-venc"></div>
+      <div class="field full"><label>Observacoes</label><textarea id="f-obs" placeholder="Notas sobre renovacao, aditivos, etc."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvar()">Salvar contrato</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let contratos = [
+  {id:1,fornecedor:'AWS Brasil',objeto:'Cloud Infrastructure',responsavel:'Carlos Souza',valor:18500,inicio:'2024-01-15',vencimento:'2026-01-15',pagto:'Mensal',status:'Ativo',obs:''},
+  {id:2,fornecedor:'Microsoft',objeto:'Licencas M365',responsavel:'Ana Lima',valor:4200,inicio:'2023-06-01',vencimento:'2025-06-01',pagto:'Anual',status:'Vencendo em 30 dias',obs:'Renovacao em analise'},
+  {id:3,fornecedor:'Fortinet',objeto:'Firewall e suporte',responsavel:'Joao Melo',valor:9800,inicio:'2022-03-10',vencimento:'2025-03-10',pagto:'Anual',status:'Encerrado',obs:''},
+  {id:4,fornecedor:'Totvs',objeto:'ERP + Suporte',responsavel:'Mariana Costa',valor:32000,inicio:'2024-09-01',vencimento:'2027-09-01',pagto:'Mensal',status:'Ativo',obs:''},
+  {id:5,fornecedor:'Zabbix BR',objeto:'Monitoramento NOC',responsavel:'Fernanda Reis',valor:3500,inicio:'2025-01-01',vencimento:'2026-01-01',pagto:'Semestral',status:'Em renovacao',obs:''},
+];
+let nextId = 6;
+let editId = null;
+
+function fmt(v){return 'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2});}
+function fmtDate(d){if(!d)return '-';const[y,m,dd]=d.split('-');return dd+'/'+m+'/'+y;}
+function badgeClass(s){
+  if(s==='Ativo') return 'b-ativo';
+  if(s==='Vencendo em 30 dias') return 'b-venc';
+  if(s==='Encerrado') return 'b-enc';
+  return 'b-renov';
+}
+
+function showPage(name, btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='contratos') renderTabela();
+  if(name==='vencimentos') renderVencimentos();
+  if(name==='dashboard') renderDashboard();
+}
+
+function renderKPIs(){
+  const ativos=contratos.filter(c=>c.status==='Ativo').length;
+  const venc=contratos.filter(c=>c.status==='Vencendo em 30 dias').length;
+  const enc=contratos.filter(c=>c.status==='Encerrado').length;
+  const valor=contratos.filter(c=>c.status!=='Encerrado').reduce((a,c)=>a+Number(c.valor),0);
+  document.getElementById('kpi-grid').innerHTML=`
+    <div class="kpi"><div class="kpi-label">Total de contratos</div><div class="kpi-val">${contratos.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Ativos</div><div class="kpi-val success">${ativos}</div></div>
+    <div class="kpi"><div class="kpi-label">Vencendo em breve</div><div class="kpi-val warn">${venc}</div></div>
+    <div class="kpi"><div class="kpi-label">Encerrados</div><div class="kpi-val danger">${enc}</div></div>
+    <div class="kpi"><div class="kpi-label">Valor mensal (ativos)</div><div class="kpi-val sm">${fmt(valor)}</div></div>
+  `;
+}
+
+let chartStatus=null, chartValor=null, chartPagto=null;
+function renderCharts(){
+  const isDark=matchMedia('(prefers-color-scheme: dark)').matches;
+  const gridColor=isDark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.06)';
+  const labelColor=isDark?'#B4B2A9':'#5F5E5A';
+
+  const statusCounts={Ativo:0,'Vencendo em 30 dias':0,'Em renovacao':0,Encerrado:0};
+  contratos.forEach(c=>{if(statusCounts[c.status]!==undefined)statusCounts[c.status]++;});
+  const statusColors=['#639922','#BA7517','#378ADD','#888780'];
+  const statusLabels=Object.keys(statusCounts);
+  const statusData=Object.values(statusCounts);
+
+  document.getElementById('legend-status').innerHTML=statusLabels.map((l,i)=>
+    `<span><span class="legend-dot" style="background:${statusColors[i]}"></span>${l} (${statusData[i]})</span>`
+  ).join('');
+
+  if(chartStatus) chartStatus.destroy();
+  chartStatus=new Chart(document.getElementById('chartStatus'),{
+    type:'doughnut',
+    data:{labels:statusLabels,datasets:[{data:statusData,backgroundColor:statusColors,borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}
+  });
+
+  const fornMap={};
+  contratos.forEach(c=>{fornMap[c.fornecedor]=(fornMap[c.fornecedor]||0)+Number(c.valor);});
+  if(chartValor) chartValor.destroy();
+  chartValor=new Chart(document.getElementById('chartValor'),{
+    type:'bar',
+    data:{labels:Object.keys(fornMap),datasets:[{data:Object.values(fornMap),backgroundColor:'#185FA5',borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:labelColor,autoSkip:false,maxRotation:30},grid:{color:gridColor}},
+              y:{ticks:{color:labelColor,callback:v=>'R$ '+Number(v).toLocaleString('pt-BR')},grid:{color:gridColor}}}}
+  });
+
+  const pagtoMap={};
+  contratos.forEach(c=>{pagtoMap[c.pagto]=(pagtoMap[c.pagto]||0)+1;});
+  const pagtoColors={'Mensal':'#185FA5','Trimestral':'#1D9E75','Semestral':'#1D9E75','Anual':'#BA7517','Unico':'#888780'};
+  if(chartPagto) chartPagto.destroy();
+  chartPagto=new Chart(document.getElementById('chartPagto'),{
+    type:'bar',
+    data:{labels:Object.keys(pagtoMap),datasets:[{data:Object.values(pagtoMap),backgroundColor:Object.keys(pagtoMap).map(k=>pagtoColors[k]||'#888780'),borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:labelColor},grid:{color:gridColor}},
+              y:{ticks:{color:labelColor,stepSize:1},grid:{color:gridColor},min:0}}}
+  });
+}
+
+function renderDashVenc(){
+  const sorted=[...contratos].filter(c=>c.status!=='Encerrado').sort((a,b)=>a.vencimento.localeCompare(b.vencimento));
+  document.getElementById('dash-venc').innerHTML=sorted.slice(0,5).map(c=>`
+    <div class="venc-item">
+      <div>
+        <div class="venc-name">${c.fornecedor} — ${c.objeto}</div>
+        <div class="venc-sub">Resp: ${c.responsavel} · Vence ${fmtDate(c.vencimento)}</div>
+      </div>
+      <span class="badge ${badgeClass(c.status)}">${c.status}</span>
+    </div>
+  `).join('');
+}
+
+function renderDashboard(){
+  renderKPIs();
+  renderCharts();
+  renderDashVenc();
+}
+
+function renderTabela(){
+  const busca=document.getElementById('busca').value.toLowerCase();
+  const status=document.getElementById('filtroStatus').value;
+  const lista=contratos.filter(c=>{
+    const ok=!busca||(c.fornecedor+c.objeto+c.responsavel).toLowerCase().includes(busca);
+    const okS=!status||c.status===status;
+    return ok&&okS;
+  });
+  document.getElementById('tbody').innerHTML=lista.length===0
+    ?`<tr><td colspan="9"><div class="empty-msg">Nenhum contrato encontrado.</div></td></tr>`
+    :lista.map(c=>`<tr>
+      <td title="${c.fornecedor}">${c.fornecedor}</td>
+      <td title="${c.objeto}">${c.objeto}</td>
+      <td>${c.responsavel}</td>
+      <td>${fmt(c.valor)}</td>
+      <td>${fmtDate(c.inicio)}</td>
+      <td>${fmtDate(c.vencimento)}</td>
+      <td>${c.pagto}</td>
+      <td><span class="badge ${badgeClass(c.status)}">${c.status}</span></td>
+      <td><div class="tactions">
+        <button class="tbtn" onclick="abrirModal(${c.id})">Editar</button>
+        <button class="tbtn del" onclick="excluir(${c.id})">Excluir</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function renderVencimentos(){
+  const sorted=[...contratos].sort((a,b)=>a.vencimento.localeCompare(b.vencimento));
+  document.getElementById('venc-full').innerHTML=sorted.map(c=>`
+    <div class="venc-item">
+      <div>
+        <div class="venc-name">${c.fornecedor} — ${c.objeto}</div>
+        <div class="venc-sub">Resp: ${c.responsavel} · ${fmt(c.valor)} · ${c.pagto} · Vence ${fmtDate(c.vencimento)}</div>
+      </div>
+      <span class="badge ${badgeClass(c.status)}">${c.status}</span>
+    </div>
+  `).join('');
+}
+
+function abrirModal(id=null){
+  editId=id;
+  const m=id?contratos.find(c=>c.id===id):null;
+  document.getElementById('modal-title').textContent=id?'Editar contrato':'Novo contrato';
+  document.getElementById('f-fornecedor').value=m?m.fornecedor:'';
+  document.getElementById('f-objeto').value=m?m.objeto:'';
+  document.getElementById('f-resp').value=m?m.responsavel:'Ana Lima';
+  document.getElementById('f-pagto').value=m?m.pagto:'Mensal';
+  document.getElementById('f-valor').value=m?m.valor:'';
+  document.getElementById('f-status').value=m?m.status:'Ativo';
+  document.getElementById('f-inicio').value=m?m.inicio:'';
+  document.getElementById('f-venc').value=m?m.vencimento:'';
+  document.getElementById('f-obs').value=m?m.obs:'';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function fecharModal(){ document.getElementById('modalOverlay').classList.remove('open'); }
+function fecharModalBg(e){ if(e.target===document.getElementById('modalOverlay')) fecharModal(); }
+
+function salvar(){
+  const forn=document.getElementById('f-fornecedor').value.trim();
+  const obj=document.getElementById('f-objeto').value.trim();
+  if(!forn||!obj){ alert('Preencha o fornecedor e o objeto do contrato.'); return; }
+  const dados={
+    fornecedor:forn, objeto:obj,
+    responsavel:document.getElementById('f-resp').value,
+    pagto:document.getElementById('f-pagto').value,
+    valor:Number(document.getElementById('f-valor').value)||0,
+    status:document.getElementById('f-status').value,
+    inicio:document.getElementById('f-inicio').value,
+    vencimento:document.getElementById('f-venc').value,
+    obs:document.getElementById('f-obs').value,
+  };
+  if(editId){
+    contratos=contratos.map(c=>c.id===editId?{...dados,id:editId}:c);
+  } else {
+    contratos.push({...dados,id:nextId++});
+  }
+  fecharModal();
+  renderTabela();
+}
+
+function excluir(id){
+  if(confirm('Deseja excluir este contrato?')){ contratos=contratos.filter(c=>c.id!==id); renderTabela(); }
+}
+
+renderDashboard();
+</script>
+</body>
+</html>

@@ -451,5 +451,34 @@ function excluir(id){
 
 renderDashboard();
 </script>
+ 
+<script>
+  /* ===== LOGIN MICROSOFT (MSAL) ===== */
+  const msalConfig = {
+    auth: {
+    clientId: "75842b7a-327b-404c-91f1-5dcab9f16164",
+    authority: "https://login.microsoftonline.com/cabe734e-9027-498a-a985-345e348d87b6",
+    redirectUri: "https://overinfotec.github.io/Sistema-Contratos/"
+
+    }
+  };
+
+  const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+  async function loginMicrosoft() {
+    const response = await msalInstance.loginPopup({
+      scopes: ["User.Read"]
+    });
+    document.getElementById("user-info").innerText =
+      "Logado como: " + response.account.username;
+  }
+
+  function logoutMicrosoft() {
+    msalInstance.logoutPopup();
+    document.getElementById("user-info").innerText = "";
+  }
+</script>
+
 </body>
 </html>
+

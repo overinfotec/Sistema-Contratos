@@ -1,16 +1,21 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Teste Navegação</title>
+  <title>Login – Sistema de Contratos</title>
 </head>
 <body>
 
-<h1>TESTE</h1>
+<button onclick="login()">Entrar com GitHub</button>
 
-<a href="https://www.google.com" target="_self">
-  IR PARA GOOGLE
-</a>
+<script>
+  function login() {
+    window.location.href =
+      "https://fhjfnmmkysqlnnuyipeg.supabase.co/auth/v1/authorize" +
+      "?provider=github" +
+      "&redirect_to=https://contratos.overinfotec.com.br/index.html"
+  }
+</script>
 
 </body>
 </html>

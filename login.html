@@ -2,23 +2,22 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Login Supabase</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-<body>
-  <button onclick="login()">Entrar com GitHub</button>
-
-  <script>
-    const supabaseUrl = 'https://fhjfnmmkysqlnnuyipeg.supabase.co'
-    const supabaseKey = 'SUA_PUBLIC_ANON_KEY_AQUI'
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey)
-
-    async function login() {
-      await supabase.auth.signInWithOAuth({
-        provider: 'github'
-      })
+  <title>Login – Sistema de Contratos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
     }
-  </script>
-</body>
-</html>
-``
+    .login-box {
+      background: #fff;
+      padding: 30px 40px;
+      border-radius: 8px;
+      box-shadow: 0 10px 20px rgba(0,0,0,.1);
+      text-align: center;
+    }
+    button {

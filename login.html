@@ -1,23 +1,21 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Login – Sistema de Contratos</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      background: #f5f5f5;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    .login-box {
-      background: #fff;
-      padding: 30px 40px;
-      border-radius: 8px;
-      box-shadow: 0 10px 20px rgba(0,0,0,.1);
-      text-align: center;
-    }
-    button {
+  <meta charset="UTF-8">
+  <title>Login Teste</title>
+</head>
+<body>
+
+<button onclick="login()">Entrar com GitHub</button>
+
+<script>
+  function login() {
+    window.location.href =
+      "https://fhjfnmmkysqlnnuyipeg.supabase.co/auth/v1/authorize" +
+      "?provider=github" +
+      "&redirect_to=https://contratos.overinfotec.com.br/index.html"
+  }
+</script>
+
+</body>
+</html>

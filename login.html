@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login Supabase</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <button onclick="login()">Entrar com GitHub</button>
+
+  <script>
+    const supabaseUrl = 'https://fhjfnmmkysqlnnuyipeg.supabase.co'
+    const supabaseKey = 'SUA_PUBLIC_ANON_KEY_AQUI'
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey)
+
+    async function login() {
+      await supabase.auth.signInWithOAuth({
+        provider: 'github'
+      })
+    }
+  </script>
+</body>
+</html>
+``

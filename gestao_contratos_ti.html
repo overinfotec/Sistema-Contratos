@@ -482,19 +482,40 @@ renderDashboard();
   };
 
   const msalInstance = new msal.PublicClientApplication(msalConfig);
+ function verificarLogin() {
+  const contas = msalInstance.getAllAccounts();
 
-  async function loginMicrosoft() {
-    const response = await msalInstance.loginPopup({
-      scopes: ["User.Read"]
-    });
+  if (contas.length > 0) {
+    // Usuário LOGADO
+    document.getElementById("login-required").classList.remove("active");
+    document.getElementById("page-dashboard").classList.add("active");
+
     document.getElementById("user-info").innerText =
-      "Logado como: " + response.account.username;
-  }
+      "Logado como: " + contas[0].username;
 
-  function logoutMicrosoft() {
-    msalInstance.logoutPopup();
-    document.getElementById("user-info").innerText = "";
+    renderDashboard();
+  } else {
+    // Usuário NÃO logado
+    document.getElementById("page-dashboard").classList.remove("active");
+    document.getElementById("login-required").classList.add("active");
   }
+}
+async function loginMicrosoft() {
+  await msalInstance.loginPopup({
+    scopes: ["User.Read"],
+    prompt: "select_account"
+  });
+
+  verificarLogin();
+}
+
+function logoutMicrosoft() {
+  msalInstance.logoutPopup();
+  document.getElementById("user-info").innerText = "";
+  verificarLogin();
+}
+
+ verificarLogin();
 </script>
 
 </body>

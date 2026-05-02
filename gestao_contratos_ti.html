@@ -524,10 +524,29 @@ function logoutMicrosoft() {
   document.getElementById("user-info").innerText = "";
   verificarLogin();
 }
+function verificarLogin() {
+  const contas = msalInstance.getAllAccounts();
+  const logado = contas.length > 0;
 
- verificarLogin();
- function podeAcessarPagina() {
-  return msalInstance.getAllAccounts().length > 0;
+  // Remove active de TODAS as páginas
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+
+  // Remove active do menu
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+
+  if (logado) {
+    // ✅ Usuário logado → vai para Dashboard
+    document.getElementById('page-dashboard').classList.add('active');
+
+    document.getElementById("user-info").innerText =
+      "Logado como: " + contas[0].username;
+
+    renderDashboard();
+  } else {
+    // 🔒 NÃO logado → só acesso restrito
+    document.getElementById('login-required').classList.add('active');
+    document.getElementById("user-info").innerText = "";
+  }
 }
 </script>
 

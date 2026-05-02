@@ -2,43 +2,37 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Gestão de Contratos de TI</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <style>
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      background: #f4f6f8;
-      margin: 0;
-      padding: 20px;
-    }
-    header {
-      background: #0f172a;
-      color: #fff;
-      padding: 15px 20px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-    .box {
-      background: #fff;
-      border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 4px 10px rgba(0,0,0,.08);
-    }
-    button {
-      padding: 10px 16px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    .logout {
-      background: #dc2626;
-      color: #fff;
-    }
-  </style>
+  <title>Login</title>
 </head>
 <body>
 
-  <header>
-    <h2>Gestão de Contratos de TI</h2>
+<h2>Login</h2>
+
+<button id="btnLogin">Entrar com GitHub</button>
+
+<script type="module">
+  import { createClient } 
+    from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+  const supabase = createClient(
+    "https://fhjfjmmkyeslnnuyipeg.supabase.co",
+    "SUA_ANON_PUBLIC_KEY_AQUI"
+  );
+
+  document.getElementById("btnLogin").onclick = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "github",
+      options: {
+        redirectTo: "https://contratos.overinfotec.com.br/gestao_contratos_ti.html"
+      }
+    });
+
+    if (error) {
+      alert(error.message);
+      console.error(error);
+    }
+  };
+</script>
+
+</body>
+</html>
